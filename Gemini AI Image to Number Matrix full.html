@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AI Image to Number Matrix Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono-code { font-family: 'Fira Code', monospace; }
+        /* Custom styles for 3x smaller, highly detailed square grid cells (5px x 5px) */
+        .pixel-cell {
+            aspect-ratio: 1 / 1 !important;
+            width: 5px !important;
+            height: 5px !important;
+            min-width: 5px !important;
+            min-height: 5px !important;
+            max-width: 5px !important;
+            max-height: 5px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4px;
+            font-weight: bold;
+            font-family: 'Fira Code', monospace;
+            border-radius: 1px;
+            user-select: none;
+            transition: transform 0.1s ease;
+        }
+        .pixel-cell:hover {
+            transform: scale(3.5);
+            z-index: 10;
+            box-shadow: 0 0 6px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-8 px-4" tabindex="0">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold tracking-tight text-indigo-400 mb-2">Gemini AI Image to Number Matrix</h1>
+            <p class="text-slate-400 text-sm max-w-xl mx-auto">Ubah gambar hasil AI Gemini menjadi peta angka piksel beresolusi tinggi hingga 64px dengan sel kotak ultra-kecil dan standar web RGB. Mendukung unggah banyak gambar & paste <kbd class="bg-slate-800 px-1.5 py-0.5 rounded text-xs text-indigo-300 border border-slate-700">Ctrl+V</kbd>.</p>
+        </header>
+
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl mb-6">
+            <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
+                Unggah & Pengaturan Grid
+            </h2>
+
+            <div class="space-y-4">
+                <!-- File Upload & Paste Area Info -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Pilih File Gambar Gemini (Bisa Pilih Banyak / <kbd class="text-indigo-400">Ctrl + V</kbd> di halaman ini):</label>
+                    <input type="file" id="imageInput" accept="image/*" multiple class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer border border-slate-700 rounded-xl bg-slate-900/50 p-2">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <!-- Resolution Slider (Max 64px) -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Resolusi Maksimum (Grid Size): <span id="gridSizeVal" class="text-indigo-400 font-bold">32</span> px</label>
+                        <input type="range" id="gridSizeRange" min="8" max="64" value="32" class="w-full accent-indigo-500 bg-slate-700 rounded-lg h-2 cursor-pointer">
+                    </div>
+
+                    <!-- Orientation Toggle -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Orientasi Matriks Utama:</label>
+                        <div class="flex gap-2">
+                            <button type="button" id="btnOrientH" onclick="setOrientation('horizontal')" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md transition-all">Horizontal (Row)</button>
+                            <button type="button" id="btnOrientV" onclick="setOrientation('vertical')" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all">Vertikal (Col)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colored Mode Selector Badges -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Pilih Mode Angka Warna (Standar Web RGB):</label>
+                    <div class="flex flex-wrap gap-3" id="colorModeContainer">
+                        <button type="button" onclick="setColorMode('grayscale')" data-mode="grayscale" class="mode-btn px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md bg-gradient-to-r from-slate-600 to-slate-700 text-white border-2 border-indigo-400 ring-2 ring-indigo-400">
+                            Grayscale (0 - 9)
+                        </button>
+                        <button type="button" onclick="setColorMode('rgb')" data-mode="rgb" class="mode-btn px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md bg-gradient-to-r from-red-600 via-green-600 to-blue-600 text-white border-2 border-transparent hover:border-indigo-300">
+                            Web RGB Array [R,G,B]
+                        </button>
+                        <button type="button" onclick="setColorMode('binary')" data-mode="binary" class="mode-btn px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md bg-gradient-to-r from-emerald-600 to-teal-700 text-white border-2 border-transparent hover:border-emerald-400">
+                            Biner (0 & 1)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Area for Multiple Images -->
+                <div class="pt-4 border-t border-slate-700/60">
+                    <p class="text-xs text-slate-400 mb-2 font-medium">Daftar Gambar Sumber (<span id="imageCountText">0 gambar</span>)</p>
+                    <div id="sourceImagesContainer" class="flex flex-wrap gap-3 items-center min-h-[90px] p-3 rounded-xl border border-dashed border-slate-700 bg-slate-900/50">
+                        <div id="noImageIcon" class="text-xs text-slate-500 w-full text-center py-4">Belum ada gambar yang diunggah atau ditempel (Paste Ctrl+V).</div>
+                    </div>
+                    <p class="text-sm font-medium text-slate-200 mt-3" id="statusDimensi">Status: Silakan unggah atau paste gambar Gemini.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-3">
+                <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                    <span class="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
+                    Kode Matrix JavaScript (Multi-Image Array)
+                </h2>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleOrientation()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all">Tukar Horisontal ⇄ Vertikal</button>
+                    <button onclick="downloadJSFile()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md">Unduh File .js</button>
+                    <button onclick="copyCode()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md">Salin Kode</button>
+                </div>
+            </div>
+            <textarea id="outputCode" readonly class="w-full h-48 bg-slate-900/80 border border-slate-700 rounded-xl p-3 text-xs font-mono-code text-slate-300 resize-y focus:outline-none focus:border-indigo-500" placeholder="Matrix array JavaScript akan muncul di sini..."></textarea>
+        </div>
+
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+            <h2 class="text-lg font-semibold text-slate-200 mb-2 flex items-center gap-2">
+                <span class="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</span>
+                Pratinjau Visual Peta Angka (Kotak Ultra-Kecil 5px & Detail Tinggi)
+            </h2>
+            <p class="text-xs text-slate-400 mb-4">Menampilkan pratinjau grid dari seluruh gambar yang telah dimuat secara berdampingan.</p>
+            <div id="visualContainer" class="overflow-auto max-h-[600px] p-4 bg-slate-900/90 border border-slate-700 rounded-xl flex flex-wrap gap-6 items-center justify-center">
+                <span class="text-slate-500 text-sm">Belum ada visual grid yang dimuat.</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentOrientation = 'horizontal'; 
+        let currentColorMode = 'grayscale'; 
+        let loadedImagesData = []; // Menyimpan array objek gambar {name, width, height, matrix}
+
+        const modeColorsGrayscale = [
+            'bg-slate-900 text-slate-100', 'bg-slate-800 text-slate-200', 'bg-slate-700 text-slate-200', 'bg-slate-600 text-white',
+            'bg-slate-500 text-white', 'bg-slate-400 text-slate-900', 'bg-slate-300 text-slate-900', 'bg-slate-200 text-slate-900',
+            'bg-slate-100 text-slate-900', 'bg-white text-slate-900'
+        ];
+
+        // Event listener untuk tombol input file (mendukung multiple files)
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            handleFiles(files);
+        });
+
+        // Event listener global untuk fitur Paste (Ctrl+V) gambar di halaman
+        window.addEventListener('paste', function(e) {
+            const items = e.clipboardData || e.originalEvent.clipboardData;
+            if (!items) return;
+
+            let filesToProcess = [];
+            for (let i = 0; i < items.items.length; i++) {
+                if (items.items[i].type.indexOf('image') !== -1) {
+                    const blob = items.items[i].getAsFile();
+                    if (blob) {
+                        filesToProcess.push(blob);
+                    }
+                }
+            }
+
+            if (filesToProcess.length > 0) {
+                handleFiles(filesToProcess);
+            }
+        });
+
+        function handleFiles(files) {
+            let processedCount = 0;
+            const tempImages = [];
+
+            Array.from(files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imgObj = new Image();
+                    imgObj.onload = function() {
+                        tempImages.push({
+                            name: file.name || `Pasted_Image_${Date.now()}_${index + 1}`,
+                            src: event.target.result,
+                            width: imgObj.width,
+                            height: imgObj.height,
+                            imgElement: imgObj
+                        });
+
+                        processedCount++;
+                        if (processedCount === files.length) {
+                            // Tambahkan ke state utama
+                            loadedImagesData = loadedImagesData.concat(tempImages);
+                            processAllImages();
+                        }
+                    };
+                    imgObj.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.getElementById('gridSizeRange').addEventListener('input', function(e) {
+            document.getElementById('gridSizeVal').innerText = e.target.value;
+            if (loadedImagesData.length > 0) {
+                processAllImages();
+            }
+        });
+
+        function setColorMode(mode) {
+            currentColorMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                if (btn.getAttribute('data-mode') === mode) {
+                    btn.classList.add('border-2', 'border-white', 'ring-2', 'ring-indigo-400');
+                } else {
+                    btn.classList.remove('border-2', 'border-white', 'ring-2', 'ring-indigo-400');
+                }
+            });
+
+            if (loadedImagesData.length > 0) {
+                processAllImages();
+            }
+        }
+
+        function setOrientation(orient) {
+            currentOrientation = orient;
+            const btnH = document.getElementById('btnOrientH');
+            const btnV = document.getElementById('btnOrientV');
+
+            if (orient === 'horizontal') {
+                btnH.className = "flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md transition-all";
+                btnV.className = "flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all";
+            } else {
+                btnV.className = "flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md transition-all";
+                btnH.className = "flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all";
+            }
+
+            if (loadedImagesData.length > 0) {
+                processAllImages();
+            }
+        }
+
+        function toggleOrientation() {
+            setOrientation(currentOrientation === 'horizontal' ? 'vertical' : 'horizontal');
+        }
+
+        function removeImage(index) {
+            loadedImagesData.splice(index, 1);
+            if (loadedImagesData.length === 0) {
+                document.getElementById('sourceImagesContainer').innerHTML = '<div id="noImageIcon" class="text-xs text-slate-500 w-full text-center py-4">Belum ada gambar yang diunggah atau ditempel (Paste Ctrl+V).</div>';
+                document.getElementById('imageCountText').innerText = '0 gambar';
+                document.getElementById('statusDimensi').innerText = 'Status: Silakan unggah atau paste gambar Gemini.';
+                document.getElementById('outputCode').value = '';
+                document.getElementById('visualContainer').innerHTML = '<span class="text-slate-500 text-sm">Belum ada visual grid yang dimuat.</span>';
+            } else {
+                processAllImages();
+            }
+        }
+
+        function processAllImages() {
+            const maxGrid = parseInt(document.getElementById('gridSizeRange').value);
+            
+            // Render UI daftar gambar sumber
+            const containerSource = document.getElementById('sourceImagesContainer');
+            containerSource.innerHTML = '';
+            document.getElementById('imageCountText').innerText = `${loadedImagesData.length} gambar`;
+
+            let allMatricesData = [];
+
+            loadedImagesData.forEach((item, idx) => {
+                // Thumbnail preview item
+                const thumbDiv = document.createElement('div');
+                thumbDiv.className = "relative group w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 flex-shrink-0";
+                thumbDiv.innerHTML = `
+                    <img src="${item.src}" alt="${item.name}" class="w-full h-full object-cover">
+                    <button onclick="removeImage(${idx})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" title="Hapus gambar">×</button>
+                `;
+                containerSource.appendChild(thumbDiv);
+
+                // Proses konversi piksel ke matrix
+                let targetW = maxGrid;
+                let targetH = Math.max(2, Math.round((item.height * maxGrid) / item.width));
+
+                // Buat temporary canvas untuk pembacaan piksel
+                const canvas = document.createElement('canvas');
+                canvas.width = targetW;
+                canvas.height = targetH;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(item.imgElement, 0, 0, targetW, targetH);
+
+                const imgData = ctx.getImageData(0, 0, targetW, targetH);
+                const data = imgData.data;
+
+                let rawMatrix = [];
+                for (let y = 0; y < targetH; y++) {
+                    let row = [];
+                    for (let x = 0; x < targetW; x++) {
+                        const pixelIdx = (y * targetW + x) * 4;
+                        const r = data[pixelIdx];
+                        const g = data[pixelIdx + 1];
+                        const b = data[pixelIdx + 2];
+
+                        let val;
+                        const avg = (r + g + b) / 3;
+
+                        if (currentColorMode === 'grayscale') {
+                            val = Math.floor((avg / 255) * 9); 
+                        } else if (currentColorMode === 'rgb') {
+                            val = [r, g, b]; 
+                        } else if (currentColorMode === 'binary') {
+                            val = avg > 127 ? 1 : 0;
+                        }
+                        row.push(val);
+                    }
+                    rawMatrix.push(row);
+                }
+
+                let finalMatrix = rawMatrix;
+                if (currentOrientation === 'vertical') {
+                    let transposed = [];
+                    for (let x = 0; x < targetW; x++) {
+                        let colArr = [];
+                        for (let y = 0; y < targetH; y++) {
+                            colArr.push(rawMatrix[y][x]);
+                        }
+                        transposed.push(colArr);
+                    }
+                    finalMatrix = transposed;
+                }
+
+                allMatricesData.push({
+                    name: item.name,
+                    width: targetW,
+                    height: targetH,
+                    matrix: finalMatrix
+                });
+            });
+
+            document.getElementById('statusDimensi').innerText = `Status: Berhasil memproses ${loadedImagesData.length} gambar dengan resolusi grid max ${maxGrid}px.`;
+
+            renderCodeOutput(allMatricesData);
+            renderVisualGrids(allMatricesData);
+        }
+
+        function renderCodeOutput(matricesList) {
+            const orientLabel = currentOrientation === 'horizontal' ? 'Horizontal (Row-Major: [Baris][Kolom])' : 'Vertikal (Column-Major / Transposed: [Kolom][Baris])';
+            
+            let jsCode = `// Gemini AI Image to Number Matrix Converter (Multi-Image Array)\n` +
+                         `// Mode: ${currentColorMode.toUpperCase()} | Orientasi: ${orientLabel}\n` +
+                         `// Total Gambar: ${matricesList.length}\n\n` +
+                         `const aiImageMatrices = [\n`;
+
+            matricesList.forEach((item, index) => {
+                jsCode += `  // [${index}] File: ${item.name} (${item.width}x${item.height})\n`;
+                jsCode += `  {\n`;
+                jsCode += `    name: "${item.name}",\n`;
+                jsCode += `    width: ${item.width},\n`;
+                jsCode += `    height: ${item.height},\n`;
+                jsCode += `    matrix: ${JSON.stringify(item.matrix, null, 4).split('\n').map(line => '    ' + line).join('\n')}\n`;
+                jsCode += `  }${index < matricesList.length - 1 ? ',' : ''}\n\n`;
+            });
+            jsCode += `];\n`;
+
+            document.getElementById('outputCode').value = jsCode;
+        }
+
+        function renderVisualGrids(matricesList) {
+            const container = document.getElementById('visualContainer');
+            if (!matricesList || matricesList.length === 0) {
+                container.innerHTML = '<span class="text-slate-500 text-sm">Belum ada visual grid.</span>';
+                return;
+            }
+
+            let mainHtml = '';
+            matricesList.forEach((item, index) => {
+                mainHtml += `
+                    <div class="flex flex-col items-center bg-slate-950/60 p-3 rounded-xl border border-slate-700/80 shadow-md">
+                        <span class="text-xs font-semibold text-indigo-400 mb-2 truncate max-w-[220px]" title="${item.name}">${index + 1}. ${item.name} (${item.width}×${item.height})</span>
+                        <div class="flex flex-col gap-[1px] items-center justify-center p-1 bg-slate-900 rounded border border-slate-800">
+                `;
+
+                const matrix = item.matrix;
+                for (let r = 0; r < matrix.length; r++) {
+                    mainHtml += '<div class="flex gap-[1px]">';
+                    for (let c = 0; c < matrix[r].length; c++) {
+                        const val = matrix[r][c];
+                        let cellStyle = '';
+                        let displayText = '';
+                        let titleText = `${item.name} [${r}][${c}]`;
+
+                        if (currentColorMode === 'rgb') {
+                            const [red, green, blue] = val;
+                            cellStyle = `background-color: rgb(${red},${green},${blue});`;
+                            titleText += ` = RGB(${red},${green},${blue})`;
+                        } else if (currentColorMode === 'grayscale') {
+                            titleText += ` = ${val}`;
+                            displayText = val;
+                        } else {
+                            titleText += ` = ${val}`;
+                            displayText = val;
+                        }
+
+                        let extraClass = '';
+                        if (currentColorMode === 'grayscale') {
+                            extraClass = modeColorsGrayscale[val % modeColorsGrayscale.length];
+                        } else if (currentColorMode === 'binary') {
+                            extraClass = val === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-500';
+                        }
+
+                        mainHtml += `<div class="pixel-cell ${extraClass}" style="${cellStyle}" title="${titleText}">${currentColorMode === 'rgb' ? '' : displayText}</div>`;
+                    }
+                    mainHtml += '</div>';
+                }
+                mainHtml += `</div></div>`;
+            });
+
+            container.innerHTML = mainHtml;
+        }
+
+        function copyCode() {
+            const textarea = document.getElementById('outputCode');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Kode Matrix JavaScript multi-gambar berhasil disalin ke clipboard!');
+        }
+
+        function downloadJSFile() {
+            const code = document.getElementById('outputCode').value;
+            const blob = new Blob([code], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gemini_multi_image_matrix.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

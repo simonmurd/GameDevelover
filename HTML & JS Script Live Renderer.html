@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML & JS Live Renderer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 h-screen flex flex-col m-0 overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-3 flex justify-between items-center shadow-md">
+        <h1 class="text-lg font-semibold tracking-wide text-cyan-400">⚡ HTML & JS Script Live Renderer</h1>
+        <span class="text-xs text-slate-400">Kiri: Kode Lengkap (HTML + JS) | Kanan: Hasil Render</span>
+    </header>
+
+    <!-- Main Content (Split Screen) -->
+    <main class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 h-[calc(100vh-60px)]">
+        
+        <!-- Panel Kiri: Input Kode HTML/JS -->
+        <section class="flex flex-col h-full bg-slate-800 border border-slate-700 rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-slate-700/50 px-4 py-2 border-b border-slate-700 text-sm font-medium text-slate-300 flex justify-between items-center">
+                <span>Paste Kode HTML / Canvas / JS di Sini</span>
+                <button onclick="clearCode()" class="text-xs bg-red-600/80 hover:bg-red-600 text-white px-2.5 py-1 rounded transition">Bersihkan</button>
+            </div>
+            <textarea id="codeInput" 
+                class="flex-1 w-full bg-slate-900 text-cyan-300 font-mono text-sm p-4 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500" 
+                placeholder="Tempelkan kode lengkap termasuk <canvas> dan <script> di sini..."></textarea>
+        </section>
+
+        <!-- Panel Kanan: Live Preview / Hasil Render -->
+        <section class="flex flex-col h-full bg-slate-800 border border-slate-700 rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-slate-700/50 px-4 py-2 border-b border-slate-700 text-sm font-medium text-slate-300">
+                <span>Preview Hasil</span>
+            </div>
+            
+            <!-- Menggunakan iframe agar script dan tag HTML murni tereksekusi dengan aman dan sempurna -->
+            <iframe id="previewFrame" class="flex-1 w-full bg-white border-0"></iframe>
+        </section>
+
+    </main>
+
+    <!-- Script Live Update -->
+    <script>
+        const codeInput = document.getElementById('codeInput');
+        const previewFrame = document.getElementById('previewFrame');
+
+        function updatePreview() {
+            const code = codeInput.value;
+            const frameDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            
+            frameDoc.open();
+            frameDoc.write(code);
+            frameDoc.close();
+        }
+
+        // Jalankan otomatis setiap kali ada perubahan/paste
+        codeInput.addEventListener('input', updatePreview);
+
+        function clearCode() {
+            codeInput.value = '';
+            const frameDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            frameDoc.open();
+            frameDoc.write('<p style="color: #94a3b8; font-family: sans-serif; text-align: center; margin-top: 20px; font-style: italic;">Belum ada kode yang dimasukkan...</p>');
+            frameDoc.close();
+        }
+    </script>
+
+</body>
+</html>

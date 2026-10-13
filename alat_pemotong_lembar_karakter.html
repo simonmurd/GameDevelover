@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alat Pemotong Lembar Karakter (Character Sheet Splitter)</title>
+    <!-- Tailwind CSS untuk styling modern -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- JSZip untuk fitur unduh sekaligus dalam arsip ZIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver.js untuk memudahkan penyimpanan file -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <header class="bg-slate-800 border-b border-slate-700 py-6 px-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3 text-emerald-400">
+                    <i class="fa-solid fa-scissors"></i> Pemotong Lembar Karakter
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Potong lembar karakter grid (seperti 3x3) menjadi sprite individual secara instan.</p>
+            </div>
+            <div id="statusBadge" class="hidden bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> <span id="statusText">Gambar siap diproses</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Panel Kontrol & Pengaturan -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Unggah File -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg">
+                <h2 class="text-lg font-semibold mb-3 flex items-center gap-2 text-slate-200">
+                    <i class="fa-solid fa-cloud-arrow-up text-indigo-400"></i> 1. Unggah Gambar
+                </h2>
+                <label for="imageInput" class="border-2 border-dashed border-slate-600 hover:border-indigo-500 bg-slate-900/50 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition text-center group">
+                    <div class="w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-image text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-slate-300">Klik untuk pilih gambar</span>
+                    <span class="text-xs text-slate-500 mt-1">PNG, JPG, WEBP (Mendukung transparansi)</span>
+                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                </label>
+            </div>
+
+            <!-- Pengaturan Grid -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg">
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-200">
+                    <i class="fa-solid fa-border-all text-indigo-400"></i> 2. Pengaturan Grid
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1 flex justify-between">
+                            <span>Jumlah Kolom (X)</span>
+                            <span id="colsVal" class="text-indigo-400 font-bold">3</span>
+                        </label>
+                        <input type="range" id="colsInput" min="1" max="10" value="3" class="w-full accent-indigo-500 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1 flex justify-between">
+                            <span>Jumlah Baris (Y)</span>
+                            <span id="rowsVal" class="text-indigo-400 font-bold">3</span>
+                        </label>
+                        <input type="range" id="rowsInput" min="1" max="10" value="3" class="w-full accent-indigo-500 cursor-pointer">
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-700">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Format Unduhan</label>
+                        <select id="formatSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="image/png">PNG (Transparan & Kualitas Tinggi)</option>
+                            <option value="image/jpeg">JPEG (Ukuran Lebih Kecil)</option>
+                            <option value="image/webp">WEBP (Modern & Efisien)</option>
+                        </select>
+                    </div>
+
+                    <button id="btnSlice" disabled class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-scissors"></i> Potong Gambar Sekarang
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Global -->
+            <div id="globalActions" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg space-y-3">
+                <h2 class="text-lg font-semibold mb-2 flex items-center gap-2 text-slate-200">
+                    <i class="fa-solid fa-download text-indigo-400"></i> 3. Ekspor Hasil
+                </h2>
+                <button id="btnDownloadAll" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-zipper"></i> Unduh Semua Sebagai ZIP
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Area Pratinjau & Hasil Potongan -->
+        <div class="lg:col-span-2 space-y-6 flex flex-col">
+            
+            <!-- Tampilan Preview Original & Garis Grid -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg flex-grow flex flex-col">
+                <h2 class="text-lg font-semibold mb-3 flex items-center gap-2 text-slate-200">
+                    <i class="fa-solid fa-eye text-indigo-400"></i> Pratinjau Lembar & Grid
+                </h2>
+                
+                <div id="previewContainer" class="bg-slate-900/80 rounded-xl border border-slate-700/50 flex-grow min-h-[300px] flex items-center justify-center relative overflow-hidden p-4">
+                    <div id="placeholderText" class="text-center text-slate-500 py-12">
+                        <i class="fa-regular fa-image text-4xl mb-2"></i>
+                        <p class="text-sm">Belum ada gambar yang dimuat. Silakan unggah terlebih dahulu.</p>
+                    </div>
+                    <!-- Canvas interaktif untuk menampilkan garis potong -->
+                    <div class="relative max-w-full max-h-[500px] overflow-auto">
+                        <canvas id="sourceCanvas" class="hidden rounded shadow-md"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hasil Potongan Grid (Sprite Sheet Generator Output) -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-semibold flex items-center gap-2 text-slate-200">
+                        <i class="fa-solid fa-grip text-indigo-400"></i> Hasil Potongan (<span id="countResult">0</span> Bagian)
+                    </h2>
+                </div>
+                
+                <div id="gridResults" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[350px] overflow-y-auto p-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                    <div class="col-span-full text-center text-slate-500 py-8 text-sm">
+                        Potongan karakter akan muncul di sini setelah Anda mengklik tombol potong.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal Pesan Kustom (Pengganti Alert) -->
+    <div id="customModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
+            <div id="modalIcon" class="w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-info"></i>
+            </div>
+            <h3 id="modalTitle" class="text-lg font-bold text-slate-100">Informasi</h3>
+            <p id="modalMessage" class="text-sm text-slate-300">Pesan keterangan di sini...</p>
+            <button id="modalCloseBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition">
+                Mengerti
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Variabel global state aplikasi
+        let loadedImage = null;
+        let originalFileName = "character_sheet";
+        let slicedPieces = [];
+
+        // Elemen DOM
+        const imageInput = document.getElementById('imageInput');
+        const colsInput = document.getElementById('colsInput');
+        const rowsInput = document.getElementById('rowsInput');
+        const colsVal = document.getElementById('colsVal');
+        const rowsVal = document.getElementById('rowsVal');
+        const btnSlice = document.getElementById('btnSlice');
+        const btnDownloadAll = document.getElementById('btnDownloadAll');
+        const sourceCanvas = document.getElementById('sourceCanvas');
+        const placeholderText = document.getElementById('placeholderText');
+        const gridResults = document.getElementById('gridResults');
+        const countResult = document.getElementById('countResult');
+        const globalActions = document.getElementById('globalActions');
+        const statusBadge = document.getElementById('statusBadge');
+        const formatSelect = document.getElementById('formatSelect');
+
+        // Fungsi Modal Kustom
+        function showModal(title, message, isError = false) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            const iconDiv = document.getElementById('modalIcon');
+            if (isError) {
+                iconDiv.className = "w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto text-xl";
+                iconDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                iconDiv.className = "w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto text-xl";
+                iconDiv.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+            }
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        document.getElementById('modalCloseBtn').addEventListener('click', () => {
+            document.getElementById('customModal').classList.add('hidden');
+        });
+
+        // Update teks slider nilai grid
+        colsInput.addEventListener('input', (e) => {
+            colsVal.textContent = e.target.value;
+            if (loadedImage) drawPreviewOverlay();
+        });
+
+        rowsInput.addEventListener('input', (e) => {
+            rowsVal.textContent = e.target.value;
+            if (loadedImage) drawPreviewOverlay();
+        });
+
+        // Event handler unggah gambar
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            originalFileName = file.name.substring(0, file.name.lastIndexOf('.')) || 'character';
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    loadedImage = img;
+                    btnSlice.removeAttribute('disabled');
+                    statusBadge.classList.remove('hidden');
+                    placeholderText.style.display = 'none';
+                    sourceCanvas.classList.remove('hidden');
+                    drawPreviewOverlay();
+                }
+                img.onerror = function() {
+                    showModal("Gagal Memuat", "Format gambar tidak valid atau rusak.", true);
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // Menggambar preview gambar dengan garis grid pembatas
+        function drawPreviewOverlay() {
+            if (!loadedImage) return;
+
+            const ctx = sourceCanvas.getContext('2d');
+            sourceCanvas.width = loadedImage.width;
+            sourceCanvas.height = loadedImage.height;
+
+            // Gambar gambar asli ke canvas
+            ctx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+            ctx.drawImage(loadedImage, 0, 0);
+
+            // Ambil nilai baris dan kolom
+            const cols = parseInt(colsInput.value);
+            const rows = parseInt(rowsInput.value);
+
+            const cellWidth = loadedImage.width / cols;
+            const cellHeight = loadedImage.height / rows;
+
+            // Gambar garis grid penanda potongan
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.8)';
+            ctx.lineWidth = Math.max(2, Math.floor(loadedImage.width / 300));
+            ctx.setLineDash([6, 6]);
+
+            // Garis Vertikal
+            for (let i = 1; i < cols; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * cellWidth, 0);
+                ctx.lineTo(i * cellWidth, loadedImage.height);
+                ctx.stroke();
+            }
+
+            // Garis Horizontal
+            for (let j = 1; j < rows; j++) {
+                ctx.beginPath();
+                ctx.moveTo(0, j * cellHeight);
+                ctx.lineTo(loadedImage.width, j * cellHeight);
+                ctx.stroke();
+            }
+        }
+
+        // Proses Pemotongan Karakter
+        btnSlice.addEventListener('click', () => {
+            if (!loadedImage) return;
+
+            const cols = parseInt(colsInput.value);
+            const rows = parseInt(rowsInput.value);
+            const format = formatSelect.value;
+            const ext = format === 'image/jpeg' ? 'jpg' : format === 'image/webp' ? 'webp' : 'png';
+
+            const cellWidth = loadedImage.width / cols;
+            const cellHeight = loadedImage.height / rows;
+
+            slicedPieces = [];
+            gridResults.innerHTML = '';
+
+            let index = 1;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    // Buat canvas temporary untuk setiap potongan sprite
+                    const pieceCanvas = document.createElement('canvas');
+                    pieceCanvas.width = Math.floor(cellWidth);
+                    pieceCanvas.height = Math.floor(cellHeight);
+                    const pCtx = pieceCanvas.getContext('2d');
+
+                    pCtx.drawImage(
+                        loadedImage,
+                        c * cellWidth, r * cellHeight, cellWidth, cellHeight,
+                        0, 0, pieceCanvas.width, pieceCanvas.height
+                    );
+
+                    const dataUrl = pieceCanvas.toDataURL(format, 0.95);
+                    const fileName = `${originalFileName}_row${r+1}_col${c+1}.${ext}`;
+                    
+                    slicedPieces.push({ name: fileName, dataUrl: dataUrl, blob: dataURItoBlob(dataUrl) });
+
+                    // Render kartu hasil potongan ke UI
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col items-center gap-2 hover:border-indigo-500 transition shadow";
+                    card.innerHTML = `
+                        <div class="w-full h-32 bg-slate-900 rounded-lg flex items-center justify-center overflow-hidden border border-slate-700/50 p-1">
+                            <img src="${dataUrl}" class="max-h-full max-w-full object-contain" alt="Potongan ${index}">
+                        </div>
+                        <div class="w-full flex items-center justify-between text-xs text-slate-400 px-1">
+                            <span>#${index} (R${r+1}, C${c+1})</span>
+                        </div>
+                        <button onclick="downloadPiece(${index - 1})" class="w-full bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-medium py-1.5 px-2 rounded-lg transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Unduh
+                        </button>
+                    `;
+                    gridResults.appendChild(card);
+                    index++;
+                }
+            }
+
+            countResult.textContent = slicedPieces.length;
+            globalActions.classList.remove('hidden');
+            showModal("Berhasil!", `Lembar karakter berhasil dipotong menjadi ${slicedPieces.length} bagian.`);
+        });
+
+        // Helper konversi DataURI ke Blob
+        function dataURItoBlob(dataURI) {
+            const byteString = atob(dataURI.split(',')[1]);
+            const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mimeString });
+        }
+
+        // Fungsi Unduh Satuan
+        window.downloadPiece = function(index) {
+            const piece = slicedPieces[index];
+            if (!piece) return;
+            saveAs(piece.blob, piece.name);
+        }
+
+        // Fungsi Unduh Semua ZIP
+        btnDownloadAll.addEventListener('click', async () => {
+            if (slicedPieces.length === 0) return;
+
+            const zip = new JSZip();
+            const folder = zip.folder("character_sprites");
+
+            slicedPieces.forEach(piece => {
+                folder.file(piece.name, piece.blob);
+            });
+
+            btnDownloadAll.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Membuat ZIP...`;
+            btnDownloadAll.setAttribute('disabled', 'true');
+
+            try {
+                const content = await zip.generateAsync({ type: "blob" });
+                saveAs(content, `${originalFileName}_split_sprites.zip`);
+                showModal("Berhasil", "Arsip ZIP berhasil diunduh.");
+            } catch (err) {
+                showModal("Gagal", "Terjadi kesalahan saat mengompresi file ZIP.", true);
+            } finally {
+                btnDownloadAll.innerHTML = `<i class="fa-solid fa-file-zipper"></i> Unduh Semua Sebagai ZIP`;
+                btnDownloadAll.removeAttribute('disabled');
+            }
+        });
+    </script>
+</body>
+</html>
