@@ -3,92 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixelCraft Hub - Custom Pixel Art Tools</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>PixelCraft Hub - Game Dev Suite</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Pixel & Sans Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .pixel-font { font-family: 'Press Start 2P', monospace; }
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .pixel-font { font-family: 'Press Start 2P', cursive; }
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #f1f5f9; }
+        
+        /* Custom Pixel Glow Effects */
+        .pixel-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+            backdrop-filter: blur(8px);
+            transition: all 0.25s ease-in-out;
+        }
+        .pixel-card:hover {
+            border-color: rgba(16, 185, 129, 0.6);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(16, 185, 129, 0.15);
+        }
+        
+        /* CRT Screen Scanline Effect Overlay */
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.2) 50%,
+                rgba(0, 0, 0, 0.2)
+            );
+            background-size: 100% 4px;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col justify-between relative overflow-x-hidden">
+
+    <!-- Scanline Overlay for Retro Vibe -->
+    <div class="pointer-events-none fixed inset-0 z-50 scanline opacity-30"></div>
 
     <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="pixel-font text-emerald-400 text-xs sm:text-sm">🎮 PixelCraft Hub</h1>
-            <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-semibold">Custom App Portal</span>
+    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-emerald-500/20 border border-emerald-500/40 rounded-lg flex items-center justify-center text-emerald-400">
+                    <i class="fa-solid fa-gamepad text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="pixel-font text-emerald-400 text-xs sm:text-sm tracking-wide">PIXELCRAFT</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">Local Tool Suite</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                    4 Tools Ready
+                </span>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 py-10 flex-grow">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex-grow w-full">
+        
+        <!-- Hero Title -->
         <div class="text-center mb-12">
-            <h2 class="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">Portal Aplikasi <span class="text-emerald-400">Pixel Art Buatan Sendiri</span></h2>
-            <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">Kumpulan alat kustom untuk memproses gambar, memotong sprite, merancang peta, hingga konversi kode matrix JavaScript siap-baca untuk game.</p>
+            <span class="text-xs uppercase tracking-widest text-emerald-400 font-semibold pixel-font">DEVS PORTAL</span>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-3 mb-4 tracking-tight">
+                Aplikasi Game Dev <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Pixel Art</span>
+            </h2>
+            <p class="text-slate-400 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
+                Akses cepat ke semua file aplikasi lokal HTML milik Anda untuk mempercepat alur kerja pembuatan game pixel art.
+            </p>
         </div>
 
-        <!-- Software Grid -->
+        <!-- Applications Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
-            <!-- App 1: Image to JS Converter -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/50 transition duration-300 flex flex-col justify-between">
+            <!-- Tool 1: Image to JS Converter -->
+            <div class="pixel-card rounded-2xl p-6 flex flex-col justify-between">
                 <div>
-                    <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400 mb-4 font-bold text-lg">⚡</div>
-                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Converter</span>
-                    <h3 class="text-lg font-bold mt-1 mb-2">Image to JS</h3>
-                    <p class="text-slate-400 text-xs sm:text-sm mb-4">Alat untuk mengubah file gambar aset pixel art langsung menjadi struktur kode format JavaScript.</p>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 text-xl">
+                            <i class="fa-solid fa-file-code"></i>
+                        </div>
+                        <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">.html</span>
+                    </div>
+                    <span class="text-xs uppercase tracking-wider text-amber-400 font-semibold font-mono">Asset Converter</span>
+                    <h3 class="text-lg font-bold text-white mt-1 mb-2">Image to JS Converter</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                        Mengubah file gambar piksel menjadi struktur variabel data JavaScript.
+                    </p>
                 </div>
-                <button onclick="openApp('Image to JS Converter.html')" class="w-full text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2 px-4 rounded-lg text-sm transition cursor-pointer">Buka Aplikasi</button>
+                <div>
+                    <div class="text-[11px] font-mono text-slate-500 mb-3 truncate" title="Image to JS Converter.html">
+                        <i class="fa-regular fa-file-code mr-1"></i> Image to JS Converter.html
+                    </div>
+                    <!-- Direct Link to local HTML file -->
+                    <a href="Image to JS Converter.html" 
+                       class="w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-200 active:scale-[0.98]">
+                        <span>Buka Aplikasi</span>
+                        <i class="fa-solid fa-arrow-right text-xs ml-2"></i>
+                    </a>
+                </div>
             </div>
 
-            <!-- App 2: Sprite Cutter -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/50 transition duration-300 flex flex-col justify-between">
+            <!-- Tool 2: Pemotong Sprite -->
+            <div class="pixel-card rounded-2xl p-6 flex flex-col justify-between">
                 <div>
-                    <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400 mb-4 font-bold text-lg">✂️</div>
-                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Sprite Tool</span>
-                    <h3 class="text-lg font-bold mt-1 mb-2">Pemotong Sprite</h3>
-                    <p class="text-slate-400 text-xs sm:text-sm mb-4">Alat untuk memotong lembaran sprite sheet (*sprite sheet cutter*) menjadi frame-frame terpisah.</p>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 text-xl">
+                            <i class="fa-solid fa-scissors"></i>
+                        </div>
+                        <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">.html</span>
+                    </div>
+                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold font-mono">Sprite Sheet</span>
+                    <h3 class="text-lg font-bold text-white mt-1 mb-2">Alat Pemotong Sprite</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                        Memotong lembaran sprite sheet menjadi grid frame terpisah untuk animasi game.
+                    </p>
                 </div>
-                <button onclick="openApp('Alat Pemotong Sprite')" class="w-full text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2 px-4 rounded-lg text-sm transition cursor-pointer">Buka Aplikasi</button>
+                <div>
+                    <div class="text-[11px] font-mono text-slate-500 mb-3 truncate" title="Alat Pemotong Sprite.html">
+                        <i class="fa-regular fa-file-code mr-1"></i> Alat Pemotong Sprite.html
+                    </div>
+                    <!-- Direct Link to local HTML file -->
+                    <a href="Alat Pemotong Sprite.html" 
+                       class="w-full inline-flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-200 active:scale-[0.98]">
+                        <span>Buka Aplikasi</span>
+                        <i class="fa-solid fa-arrow-right text-xs ml-2"></i>
+                    </a>
+                </div>
             </div>
 
-            <!-- App 3: Map Maker -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/50 transition duration-300 flex flex-col justify-between">
+            <!-- Tool 3: Pembuat Map -->
+            <div class="pixel-card rounded-2xl p-6 flex flex-col justify-between">
                 <div>
-                    <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400 mb-4 font-bold text-lg">🗺️</div>
-                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Level Design</span>
-                    <h3 class="text-lg font-bold mt-1 mb-2">Pembuat Map</h3>
-                    <p class="text-slate-400 text-xs sm:text-sm mb-4">Alat interaktif untuk menyusun ubin (*tiles*) dan merancang tata letak peta permainan.</p>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 bg-cyan-500/10 border border-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-400 text-xl">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">.html</span>
+                    </div>
+                    <span class="text-xs uppercase tracking-wider text-cyan-400 font-semibold font-mono">Level Editor</span>
+                    <h3 class="text-lg font-bold text-white mt-1 mb-2">Alat Pembuat Map</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                        Editor ubin (tilemap designer) interaktif untuk membuat peta dan layout dunia game.
+                    </p>
                 </div>
-                <button onclick="openApp('Alat Pembuat Map')" class="w-full text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2 px-4 rounded-lg text-sm transition cursor-pointer">Buka Aplikasi</button>
+                <div>
+                    <div class="text-[11px] font-mono text-slate-500 mb-3 truncate" title="Alat Pembuat Map.html">
+                        <i class="fa-regular fa-file-code mr-1"></i> Alat Pembuat Map.html
+                    </div>
+                    <!-- Direct Link to local HTML file -->
+                    <a href="Alat Pembuat Map.html" 
+                       class="w-full inline-flex items-center justify-center bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-200 active:scale-[0.98]">
+                        <span>Buka Aplikasi</span>
+                        <i class="fa-solid fa-arrow-right text-xs ml-2"></i>
+                    </a>
+                </div>
             </div>
 
-            <!-- App 4: Matrix JS Code Converter -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/50 transition duration-300 flex flex-col justify-between">
+            <!-- Tool 4: Kode Matrix JavaScript -->
+            <div class="pixel-card rounded-2xl p-6 flex flex-col justify-between">
                 <div>
-                    <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400 mb-4 font-bold text-lg">💻</div>
-                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Code Formatter</span>
-                    <h3 class="text-lg font-bold mt-1 mb-2">Matrix JS Converter</h3>
-                    <p class="text-slate-400 text-xs sm:text-sm mb-4">Alat untuk merubah koding JavaScript ke format Matrix agar langsung bisa dibaca dan dijalankan di dalam game.</p>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 text-xl">
+                            <i class="fa-solid fa-table-cells"></i>
+                        </div>
+                        <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">.html</span>
+                    </div>
+                    <span class="text-xs uppercase tracking-wider text-purple-400 font-semibold font-mono">Code Formatter</span>
+                    <h3 class="text-lg font-bold text-white mt-1 mb-2">Kode Matrix JavaScript</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                        Mengubah koding JavaScript ke format Matrix Array agar langsung dapat dieksekusi game.
+                    </p>
                 </div>
-                <button onclick="openApp('Matrix JS Converter')" class="w-full text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2 px-4 rounded-lg text-sm transition cursor-pointer">Buka Aplikasi</button>
+                <div>
+                    <div class="text-[11px] font-mono text-slate-500 mb-3 truncate" title="Kode Matrix JavaScript.html">
+                        <i class="fa-regular fa-file-code mr-1"></i> Kode Matrix JavaScript.html
+                    </div>
+                    <!-- Direct Link to local HTML file -->
+                    <a href="Kode Matrix JavaScript.html" 
+                       class="w-full inline-flex items-center justify-center bg-purple-500 hover:bg-purple-400 text-slate-950 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-200 active:scale-[0.98]">
+                        <span>Buka Aplikasi</span>
+                        <i class="fa-solid fa-arrow-right text-xs ml-2"></i>
+                    </a>
+                </div>
             </div>
 
         </div>
+
+        <!-- Instructions Panel -->
+        <div class="mt-12 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-start space-x-4">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-slate-200">Petunjuk Penggunaan File Lokal</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        Pastikan file portal <code class="text-emerald-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded">index.html</code> ini disimpan di folder yang sama dengan file HTML aplikasi Anda yang lain.
+                    </p>
+                </div>
+            </div>
+            <div class="text-xs font-mono text-slate-400 bg-slate-950/80 px-3 py-2 rounded-lg border border-slate-800/80 w-full md:w-auto text-center md:text-right">
+                Directory: <span class="text-emerald-400">./ (Folder Sama)</span>
+            </div>
+        </div>
+
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800 bg-slate-900 text-center py-6 text-xs text-slate-500">
-        <p>&copy; 2026 PixelCraft Hub. Dibangun khusus untuk manajemen aset game Anda.</p>
+    <footer class="border-t border-slate-800/80 bg-slate-950 text-center py-6 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p class="pixel-font text-[10px] text-slate-400">PIXELCRAFT HUB &copy; 2026</p>
+            <p>Portal Alat Game Dev Pixel Art</p>
+        </div>
     </footer>
-
-    <!-- Simple Interactivity Script -->
-    <script>
-        function openApp(appName) {
-            alert("Membuka modul: " + appName + "\n(Hubungkan tombol ini ke file / URL aplikasi lokal Anda berikutnya!)");
-        }
-    </script>
 
 </body>
 </html>
