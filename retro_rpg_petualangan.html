@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro RPG Petualangan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', monospace, sans-serif;
+            touch-action: manipulation;
+        }
+        .pixelated {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .retro-border {
+            box-shadow: 4px 4px 0px #000;
+        }
+        .retro-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-between p-2 md:p-4 select-none">
+
+    <!-- Header / UI Status -->
+    <header class="w-full max-w-4xl bg-slate-800 border-4 border-slate-700 rounded-lg p-3 mb-2 flex flex-wrap justify-between items-center retro-border">
+        <div class="flex items-center space-x-4 mb-2 md:mb-0">
+            <div>
+                <span class="text-xs text-slate-400 block">NYAWA</span>
+                <div id="lives-container" class="text-red-500 text-sm tracking-widest">❤️❤️❤️</div>
+            </div>
+            <div>
+                <span class="text-xs text-slate-400 block">SKOR</span>
+                <span id="score-display" class="text-yellow-400 text-sm">0</span>
+            </div>
+            <div>
+                <span class="text-xs text-slate-400 block">KRISTAL</span>
+                <span id="gems-display" class="text-cyan-400 text-sm">0/5</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="btn-sound" onclick="toggleSound()" class="bg-indigo-600 hover:bg-indigo-500 text-xs px-3 py-2 rounded retro-btn border-2 border-black">🔊 SOUND</button>
+            <button onclick="resetGame()" class="bg-amber-600 hover:bg-amber-500 text-xs px-3 py-2 rounded retro-btn border-2 border-black">🔄 RESET</button>
+        </div>
+    </header>
+
+    <!-- Main Game Arena -->
+    <main class="relative w-full max-w-4xl flex flex-col items-center bg-slate-950 border-4 border-slate-700 rounded-lg overflow-hidden retro-border">
+        
+        <!-- Canvas Container -->
+        <div class="relative w-full aspect-[16/10] bg-sky-900 overflow-hidden">
+            <canvas id="gameCanvas" class="w-full h-full block pixelated"></canvas>
+            
+            <!-- Message / Overlay Modal -->
+            <div id="game-overlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-center p-4 z-20">
+                <h1 class="text-xl md:text-3xl text-yellow-400 mb-4 leading-relaxed">RETRO RPG PETUALANGAN</h1>
+                <p class="text-xs text-slate-300 mb-6 max-w-md leading-relaxed">
+                    Jelajahi dunia luas, kumpulkan 5 Kristal Ajaib, hindari Monster Merah, dan capai gerbang portal kemenangan!
+                </p>
+                <div class="text-xs text-emerald-400 mb-6 bg-slate-900 p-3 rounded border border-emerald-500">
+                    KONTROL:<br>
+                    Desktop: Tombol Panah / WASD<br>
+                    Mobile: D-Pad & Tombol Aksi di Bawah
+                </div>
+                <button onclick="startGame()" class="bg-emerald-500 hover:bg-emerald-400 text-black text-sm px-6 py-3 rounded retro-btn border-2 border-black font-bold animate-bounce">
+                    MULAI BERMAIN
+                </button>
+            </div>
+        </div>
+
+        <!-- Info Bar bawah canvas -->
+        <div class="w-full bg-slate-900 px-4 py-2 text-[10px] text-slate-400 flex justify-between items-center border-t-2 border-slate-800">
+            <span id="status-msg">Gunakan Panah / WASD atau D-Pad untuk bergerak.</span>
+            <span class="text-yellow-400">FPS: <span id="fps-counter">60</span></span>
+        </div>
+    </main>
+
+    <!-- Mobile Controls / D-Pad & Actions -->
+    <footer class="w-full max-w-4xl mt-3 grid grid-cols-2 gap-4 items-center bg-slate-800 border-4 border-slate-700 rounded-lg p-3 retro-border">
+        <!-- D-Pad -->
+        <div class="flex justify-center items-center">
+            <div class="grid grid-cols-3 gap-1 w-36 h-36">
+                <div></div>
+                <button ontouchstart="setKey('ArrowUp', true)" ontouchend="setKey('ArrowUp', false)" onmousedown="setKey('ArrowUp', true)" onmouseup="setKey('ArrowUp', false)" class="bg-slate-700 hover:bg-slate-600 border-2 border-black rounded flex items-center justify-center text-lg retro-btn">⬆️</button>
+                <div></div>
+                
+                <button ontouchstart="setKey('ArrowLeft', true)" ontouchend="setKey('ArrowLeft', false)" onmousedown="setKey('ArrowLeft', true)" onmouseup="setKey('ArrowLeft', false)" class="bg-slate-700 hover:bg-slate-600 border-2 border-black rounded flex items-center justify-center text-lg retro-btn">⬅️</button>
+                <div class="bg-slate-900 border-2 border-black rounded flex items-center justify-center">🕹️</div>
+                <button ontouchstart="setKey('ArrowRight', true)" ontouchend="setKey('ArrowRight', false)" onmousedown="setKey('ArrowRight', true)" onmouseup="setKey('ArrowRight', false)" class="bg-slate-700 hover:bg-slate-600 border-2 border-black rounded flex items-center justify-center text-lg retro-btn">➡️</button>
+                
+                <div></div>
+                <button ontouchstart="setKey('ArrowDown', true)" ontouchend="setKey('ArrowDown', false)" onmousedown="setKey('ArrowDown', true)" onmouseup="setKey('ArrowDown', false)" class="bg-slate-700 hover:bg-slate-600 border-2 border-black rounded flex items-center justify-center text-lg retro-btn">⬇️</button>
+                <div></div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col justify-center items-center space-y-3">
+            <button ontouchstart="triggerAction()" onmousedown="triggerAction()" class="w-full py-4 bg-red-600 hover:bg-red-500 border-2 border-black rounded text-xs font-bold retro-btn tracking-wider">
+                ⚔️ AKSI / INTERAKSI
+            </button>
+            <div class="text-[10px] text-slate-400 text-center">
+                Sentuh D-Pad atau tombol aksi untuk bermain di perangkat seluler.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script Game Logika -->
+    <script>
+        // Data Hero Sprite (47 baris x 64 kolom) dari MapData yang diberikan
+        const HERO_SPRITE_DATA = [
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 214, 234, 242, 214, 243, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 17, 131, 180, 19, 183, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 0, 122, 176, 123, 93, 92, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 207, 140, 185, 145, 130, 129, 0, 122, 176, 176, 96, 66, 130, 130, 130, 160, 242, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 157, 20, 118, 34, 1, 1, 0, 122, 176, 177, 139, 116, 1, 1, 1, 60, 229, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 253, 211, 12, 89, 149, 173, 0, 85, 123, 177, 176, 172, 119, 119, 119, 92, 17, 5, 5, 5, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 243, 183, 75, 90, 135, 91, 113, 123, 176, 176, 175, 162, 133, 122, 115, 94, 126, 113, 91, 74, 74, 76, 252, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 248, 237, 244, 75, 76, 127, 127, 126, 127, 176, 176, 176, 177, 140, 126, 123, 126, 171, 154, 127, 13, 11, 13, 233, 246, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 254, 157, 20, 117, 163, 189, 199, 199, 184, 177, 176, 176, 178, 199, 183, 168, 134, 171, 195, 200, 200, 177, 152, 122, 3, 132, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 249, 69, 69, 109, 179, 191, 187, 181, 181, 178, 176, 134, 163, 178, 199, 181, 174, 168, 174, 181, 189, 198, 193, 189, 182, 96, 176, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 245, 208, 43, 67, 139, 196, 197, 185, 176, 176, 176, 178, 122, 161, 178, 199, 184, 179, 174, 169, 176, 185, 197, 196, 192, 187, 122, 167, 213, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 194, 6, 169, 182, 185, 200, 183, 176, 176, 176, 176, 176, 122, 160, 178, 199, 199, 194, 163, 127, 169, 176, 176, 176, 150, 122, 123, 62, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 248, 219, 38, 22, 39, 128, 164, 176, 176, 176, 175, 176, 122, 159, 179, 199, 199, 194, 163, 127, 167, 176, 176, 176, 151, 122, 121, 61, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 249, 78, 38, 19, 118, 136, 139, 139, 139, 165, 176, 122, 165, 185, 209, 201, 194, 163, 127, 160, 154, 139, 139, 119, 96, 121, 76, 32, 192, 226, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 254, 216, 141, 38, 130, 36, 24, 43, 42, 116, 148, 141, 196, 221, 214, 193, 183, 157, 127, 122, 83, 36, 43, 42, 44, 121, 112, 106, 43, 160, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 248, 25, 50, 131, 194, 54, 136, 249, 249, 85, 9, 247, 246, 235, 52, 105, 124, 123, 122, 122, 163, 211, 249, 249, 248, 124, 63, 3, 249, 252, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 213, 84, 116, 135, 157, 147, 39, 132, 239, 227, 187, 169, 163, 206, 223, 181, 184, 184, 169, 129, 122, 165, 216, 228, 235, 239, 125, 62, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 223, 124, 94, 91, 100, 145, 115, 170, 224, 170, 225, 250, 186, 174, 171, 213, 208, 200, 173, 184, 130, 144, 170, 215, 219, 223, 168, 126, 88, 133, 200, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 248, 31, 12, 37, 163, 201, 210, 209, 128, 213, 254, 240, 163, 130, 174, 192, 184, 155, 230, 143, 125, 122, 214, 212, 214, 215, 192, 179, 1, 141, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 238, 237, 201, 21, 136, 149, 126, 244, 250, 249, 19, 176, 235, 126, 164, 188, 192, 42, 205, 182, 121, 126, 151, 179, 214, 115, 14, 1, 141, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 214, 9, 32, 35, 30, 254, 254, 250, 37, 187, 251, 220, 156, 156, 202, 58, 213, 226, 210, 28, 36, 43, 51, 125, 194, 194, 227, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 214, 9, 26, 17, 1, 254, 254, 250, 47, 190, 254, 251, 168, 161, 204, 68, 216, 241, 240, 1, 18, 36, 0, 131, 255, 255, 255, 255, 255, 255, 255, 246, 219, 219, 229, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 214, 9, 184, 114, 2, 254, 254, 249, 47, 190, 253, 255, 255, 254, 203, 68, 225, 253, 253, 1, 122, 249, 3, 132, 255, 255, 255, 255, 255, 255, 255, 188, 3, 1, 78, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 214, 9, 25, 16, 0, 35, 177, 239, 214, 242, 254, 254, 254, 254, 244, 218, 236, 148, 35, 0, 17, 35, 1, 132, 255, 255, 255, 255, 255, 255, 72, 77, 186, 9, 77, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 253, 201, 197, 168, 17, 18, 9, 0, 49, 145, 189, 190, 231, 250, 250, 250, 250, 236, 196, 188, 125, 48, 0, 11, 19, 11, 107, 197, 197, 197, 197, 197, 197, 75, 96, 221, 12, 77, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 247, 21, 2, 9, 45, 78, 40, 2, 212, 70, 1, 3, 168, 241, 241, 241, 241, 185, 27, 2, 100, 212, 0, 43, 87, 48, 25, 2, 1, 2, 1, 2, 2, 186, 223, 248, 14, 77, 253, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 198, 19, 107, 114, 98, 7, 38, 47, 45, 13, 142, 197, 197, 72, 15, 15, 15, 15, 59, 178, 197, 112, 14, 45, 47, 51, 202, 203, 213, 1, 92, 143, 130, 192, 241, 186, 17, 1, 5, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 205, 255, 255, 255],
+            [255, 255, 255, 255, 255, 170, 133, 49, 133, 140, 127, 49, 90, 106, 105, 0, 96, 138, 138, 99, 80, 79, 79, 79, 95, 132, 138, 75, 0, 109, 106, 106, 224, 220, 222, 67, 127, 160, 143, 155, 172, 154, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 145, 175, 255, 255],
+            [255, 255, 255, 255, 254, 28, 29, 122, 172, 175, 165, 123, 191, 205, 198, 1, 4, 5, 11, 147, 206, 212, 213, 210, 159, 30, 5, 3, 1, 205, 207, 214, 245, 224, 202, 176, 176, 176, 152, 58, 50, 103, 251, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 252, 72, 60, 231, 252],
+            [255, 255, 255, 255, 254, 28, 29, 122, 171, 156, 122, 121, 185, 96, 2, 0, 33, 48, 87, 91, 100, 248, 248, 221, 91, 87, 52, 26, 0, 3, 102, 208, 208, 150, 87, 176, 176, 176, 152, 59, 83, 126, 232, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 231, 194, 44, 226],
+            [255, 255, 255, 255, 254, 28, 29, 122, 145, 138, 112, 59, 86, 70, 49, 0, 33, 47, 65, 82, 93, 165, 165, 151, 84, 68, 49, 25, 0, 51, 72, 96, 97, 70, 40, 148, 163, 176, 168, 139, 169, 156, 108, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 112, 154, 241],
+            [255, 255, 255, 255, 254, 148, 119, 58, 58, 58, 65, 110, 65, 73, 91, 0, 15, 23, 70, 67, 67, 90, 90, 85, 67, 70, 27, 12, 0, 95, 70, 50, 113, 57, 0, 57, 71, 82, 86, 98, 214, 204, 132, 7, 42, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 136, 155, 255, 255],
+            [255, 255, 255, 255, 255, 229, 178, 24, 23, 23, 51, 191, 119, 93, 91, 0, 4, 7, 82, 61, 54, 87, 88, 81, 58, 80, 16, 3, 1, 95, 92, 93, 197, 111, 24, 24, 23, 13, 5, 26, 169, 206, 244, 15, 77, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 254, 34, 51, 203, 204, 204, 187, 99, 93, 92, 91, 0, 32, 45, 3, 63, 90, 92, 92, 92, 70, 13, 40, 25, 0, 95, 92, 92, 95, 149, 205, 204, 204, 114, 45, 224, 42, 63, 215, 12, 77, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 73, 43, 43, 170, 192, 207, 113, 105, 103, 93, 92, 51, 16, 82, 58, 50, 191, 69, 18, 53, 52, 46, 57, 173, 64, 64, 83, 16, 54, 92, 92, 98, 105, 106, 165, 200, 161, 57, 8, 10, 36, 3, 77, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [247, 206, 29, 9, 44, 170, 184, 182, 99, 92, 92, 92, 78, 39, 10, 83, 82, 83, 171, 84, 45, 47, 47, 47, 75, 158, 93, 83, 83, 10, 40, 73, 92, 92, 92, 92, 144, 184, 158, 56, 7, 0, 0, 50, 114, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [217, 17, 0, 45, 213, 105, 92, 92, 92, 92, 92, 92, 25, 26, 48, 47, 164, 212, 3, 150, 206, 48, 48, 77, 164, 24, 188, 137, 46, 47, 24, 1, 90, 92, 92, 92, 92, 92, 113, 198, 36, 1, 2, 240, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [217, 17, 166, 174, 99, 93, 92, 92, 92, 92, 92, 92, 25, 2, 4, 89, 173, 209, 193, 73, 30, 202, 202, 169, 60, 175, 207, 152, 88, 4, 43, 84, 92, 92, 92, 92, 92, 92, 94, 101, 181, 142, 3, 241, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [228, 86, 137, 136, 91, 92, 92, 92, 92, 92, 92, 92, 24, 15, 27, 128, 185, 210, 210, 83, 38, 151, 151, 130, 70, 191, 210, 171, 126, 0, 46, 92, 92, 92, 92, 92, 92, 92, 92, 92, 141, 129, 76, 245, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 254, 38, 21, 96, 95, 95, 95, 95, 95, 95, 94, 25, 51, 91, 213, 213, 213, 216, 129, 88, 1, 1, 17, 121, 204, 213, 213, 212, 0, 47, 95, 95, 95, 95, 95, 95, 95, 95, 95, 16, 68, 252, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 254, 202, 0, 0, 0, 0, 0, 0, 0, 0, 0, 67, 122, 122, 122, 120, 1, 64, 92, 92, 92, 92, 70, 10, 107, 122, 122, 121, 62, 0, 0, 0, 0, 0, 0, 0, 0, 1, 212, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 222, 95, 95, 95, 95, 95, 95, 80, 3, 0, 78, 140, 140, 140, 139, 1, 42, 60, 60, 60, 60, 46, 6, 122, 141, 140, 141, 72, 0, 0, 49, 95, 95, 95, 95, 95, 95, 228, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 213, 9, 4, 101, 176, 176, 175, 172, 0, 7, 10, 10, 10, 10, 8, 2, 151, 176, 177, 176, 93, 5, 0, 131, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 214, 10, 88, 147, 170, 170, 133, 117, 11, 180, 255, 255, 255, 255, 198, 35, 102, 142, 170, 170, 145, 117, 2, 132, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 214, 9, 31, 53, 61, 61, 48, 44, 170, 229, 255, 255, 255, 255, 235, 179, 59, 51, 61, 61, 52, 41, 0, 132, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 232, 114, 109, 109, 109, 109, 109, 112, 255, 255, 255, 255, 255, 255, 255, 255, 128, 109, 109, 109, 109, 109, 108, 182, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
+        ];
+
+        // Inisialisasi Map Game (45 Baris x 64 Kolom)
+        // 0: Tanah Biasa/Rumput, 1: Dinding/Pohon, 2: Air, 3: Kristal, 4: Portal/Pintu Keluar
+        const MAP_ROWS = 45;
+        const MAP_COLS = 64;
+        const TILE_SIZE = 32;
+
+        let gameMap = [];
+        let items = []; // Kristal
+        let enemies = []; // Musuh bergerak
+        let portal = { x: 60, y: 40 };
+
+        function generateMap() {
+            gameMap = []; // Pastikan di-reset agar tidak undefined
+            for (let r = 0; r < MAP_ROWS; r++) {
+                let row = [];
+                for (let c = 0; c < MAP_COLS; c++) {
+                    // Batas map adalah dinding (1)
+                    if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) {
+                        row.push(1);
+                    } else if (Math.random() < 0.12 && !(r < 5 && c < 5)) {
+                        // Hambatan / Dinding / Pohon acak
+                        row.push(Math.random() < 0.7 ? 1 : 2);
+                    } else {
+                        row.push(0); // Rumput
+                    }
+                }
+                gameMap.push(row);
+            }
+            // Tempatkan portal di ujung
+            gameMap[portal.y][portal.x] = 4;
+
+            // Buat 5 Kristal acak
+            items = [];
+            while (items.length < 5) {
+                let rx = Math.floor(Math.random() * (MAP_COLS - 4)) + 2;
+                let ry = Math.floor(Math.random() * (MAP_ROWS - 4)) + 2;
+                if (gameMap[ry][rx] === 0) {
+                    items.push({ x: rx, y: ry, collected: false });
+                }
+            }
+
+            // Buat 6 Musuh
+            enemies = [];
+            while (enemies.length < 6) {
+                let ex = Math.floor(Math.random() * (MAP_COLS - 10)) + 5;
+                let ey = Math.floor(Math.random() * (MAP_ROWS - 10)) + 5;
+                if (gameMap[ey][ex] === 0) {
+                    enemies.push({ x: ex, y: ey, dirX: 1, dirY: 0, moveTimer: 0 });
+                }
+            }
+        }
+        
+        // Inisialisasi awal map agar gameMap tidak kosong saat render pertama kali
+        generateMap();
+
+        // Variabel Game State
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = 'START'; // START, PLAYING, GAMEOVER, WIN
+        let score = 0;
+        let lives = 3;
+        let collectedGems = 0;
+        let soundEnabled = true;
+
+        let hero = {
+            x: 3,
+            y: 3,
+            pixelX: 3 * TILE_SIZE,
+            pixelY: 3 * TILE_SIZE,
+            speed: 4,
+            moving: false,
+            dir: 'DOWN'
+        };
+
+        let keys = {};
+        let camera = { x: 0, y: 0 };
+
+        // Audio sederhana pakai Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Kontrol Keyboard
+        window.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+        window.addEventListener('keyup', e => {
+            keys[e.key] = false;
+        });
+
+        function setKey(keyName, isDown) {
+            if (keyName === 'ArrowUp') keys['ArrowUp'] = isDown;
+            if (keyName === 'ArrowDown') keys['ArrowDown'] = isDown;
+            if (keyName === 'ArrowLeft') keys['ArrowLeft'] = isDown;
+            if (keyName === 'ArrowRight') keys['ArrowRight'] = isDown;
+        }
+
+        function triggerAction() {
+            playTone(400, 'square', 0.1);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('btn-sound').innerText = soundEnabled ? '🔊 SOUND' : '🔇 MUTED';
+        }
+
+        function startGame() {
+            generateMap();
+            hero.x = 2;
+            hero.y = 2;
+            hero.pixelX = hero.x * TILE_SIZE;
+            hero.pixelY = hero.y * TILE_SIZE;
+            score = 0;
+            lives = 3;
+            collectedGems = 0;
+            gameState = 'PLAYING';
+            document.getElementById('game-overlay').classList.add('hidden');
+            updateUI();
+        }
+
+        function resetGame() {
+            document.getElementById('game-overlay').classList.remove('hidden');
+            document.getElementById('game-overlay').innerHTML = `
+                <h1 class="text-xl md:text-3xl text-yellow-400 mb-4">RESTRART PERMAINAN</h1>
+                <button onclick="startGame()" class="bg-emerald-500 hover:bg-emerald-400 text-black text-sm px-6 py-3 rounded retro-btn border-2 border-black font-bold">
+                    MULAI ULANG
+                </button>
+            `;
+            gameState = 'START';
+        }
+
+        function updateUI() {
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('gems-display').innerText = `${collectedGems}/5`;
+            document.getElementById('lives-container').innerText = '❤️'.repeat(Math.max(0, lives));
+        }
+
+        // Render Hero Sprite langsung dari data piksel 64x47 yang diskalakan ke ukuran tile
+        let heroCanvasCache = null;
+        function getHeroCanvas() {
+            if (heroCanvasCache) return heroCanvasCache;
+            let hc = document.createElement('canvas');
+            hc.width = 64;
+            hc.height = 47;
+            let hctx = hc.getContext('2d');
+            let imgData = hctx.createImageData(64, 47);
+            
+            for (let r = 0; r < 47; r++) {
+                for (let c = 0; c < 64; c++) {
+                    let val = HERO_SPRITE_DATA[r][c];
+                    let idx = (r * 64 + c) * 4;
+                    if (val === 255) {
+                        imgData.data[idx] = 0;
+                        imgData.data[idx+1] = 0;
+                        imgData.data[idx+2] = 0;
+                        imgData.data[idx+3] = 0; // Transparan
+                    } else {
+                        imgData.data[idx] = val;
+                        imgData.data[idx+1] = val;
+                        imgData.data[idx+2] = val;
+                        imgData.data[idx+3] = 255;
+                    }
+                }
+            }
+            hctx.putImageData(imgData, 0, 0);
+            heroCanvasCache = hc;
+            return hc;
+        }
+
+        // Update Posisi & Game Logic
+        let moveCooldown = 0;
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            // Logika Pergerakan Grid Berbasis Cooldown agar mulus grid-based
+            if (moveCooldown > 0) {
+                moveCooldown--;
+            } else {
+                let dx = 0, dy = 0;
+                if (keys['ArrowUp'] || keys['w'] || keys['W']) { dy = -1; hero.dir = 'UP'; }
+                else if (keys['ArrowDown'] || keys['s'] || keys['S']) { dy = 1; hero.dir = 'DOWN'; }
+                else if (keys['ArrowLeft'] || keys['a'] || keys['A']) { dx = -1; hero.dir = 'LEFT'; }
+                else if (keys['ArrowRight'] || keys['d'] || keys['D']) { dx = 1; hero.dir = 'RIGHT'; }
+
+                if (dx !== 0 || dy !== 0) {
+                    let newX = hero.x + dx;
+                    let newY = hero.y + dy;
+
+                    if (newX >= 0 && newX < MAP_COLS && newY >= 0 && newY < MAP_ROWS) {
+                        let tile = gameMap[newY][newX];
+                        if (tile !== 1 && tile !== 2) { // Bisa dilewati
+                            hero.x = newX;
+                            hero.y = newY;
+                            moveCooldown = 8; // Kecepatan langkah grid
+                            playTone(150, 'sine', 0.05);
+
+                            // Cek ambil kristal
+                            items.forEach(item => {
+                                if (!item.collected && item.x === hero.x && item.y === hero.y) {
+                                    item.collected = true;
+                                    collectedGems++;
+                                    score += 100;
+                                    playTone(600, 'square', 0.15);
+                                    updateUI();
+                                    if (collectedGems >= 5) {
+                                        document.getElementById('status-msg').innerText = "Semua Kristal Terkumpul! Menuju Portal!";
+                                    }
+                                }
+                            });
+
+                            // Cek Portal Kemenangan
+                            if (gameMap[hero.y][hero.x] === 4) {
+                                if (collectedGems >= 5) {
+                                    gameState = 'WIN';
+                                    playTone(800, 'triangle', 0.4);
+                                    showEndScreen(true);
+                                } else {
+                                    document.getElementById('status-msg').innerText = "Kumpulkan 5 kristal terlebih dahulu!";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Interpolasi posisi piksel render agar halus
+            let targetPixelX = hero.x * TILE_SIZE;
+            let targetPixelY = hero.y * TILE_SIZE;
+            hero.pixelX += (targetPixelX - hero.pixelX) * 0.3;
+            hero.pixelY += (targetPixelY - hero.pixelY) * 0.3;
+
+            // Kamera mengikuti hero
+            let targetCamX = hero.pixelX - canvas.width / 2 + TILE_SIZE / 2;
+            let targetCamY = hero.pixelY - canvas.height / 2 + TILE_SIZE / 2;
+            camera.x += (targetCamX - camera.x) * 0.2;
+            camera.y += (targetCamY - camera.y) * 0.2;
+
+            // Batasi kamera di dalam map
+            camera.x = Math.max(0, Math.min(camera.x, MAP_COLS * TILE_SIZE - canvas.width));
+            camera.y = Math.max(0, Math.min(camera.y, MAP_ROWS * TILE_SIZE - canvas.height));
+
+            // Logika Gerak Musuh Sederhana
+            enemies.forEach(en => {
+                en.moveTimer++;
+                if (en.moveTimer > 35) {
+                    en.moveTimer = 0;
+                    let choices = [{x:0, y:-1}, {x:0, y:1}, {x:-1, y:0}, {x:1, y:0}];
+                    let choice = choices[Math.floor(Math.random() * choices.length)];
+                    let nx = en.x + choice.x;
+                    let ny = en.y + choice.y;
+                    if (nx > 0 && nx < MAP_COLS-1 && ny > 0 && ny < MAP_ROWS-1 && gameMap[ny][nx] !== 1 && gameMap[ny][nx] !== 2) {
+                        en.x = nx;
+                        en.y = ny;
+                    }
+                }
+
+                // Cek tabrakan dengan hero
+                if (Math.abs(en.x - hero.x) < 1 && Math.abs(en.y - hero.y) < 1) {
+                    lives--;
+                    playTone(90, 'sawtooth', 0.3);
+                    updateUI();
+                    // Mundur dikit
+                    hero.x = Math.max(2, hero.x - 2);
+                    hero.y = Math.max(2, hero.y - 2);
+                    if (lives <= 0) {
+                        gameState = 'GAMEOVER';
+                        showEndScreen(false);
+                    }
+                }
+            });
+        }
+
+        // Render Grafik
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Cek pengaman jika gameMap belum siap
+            if (!gameMap || gameMap.length === 0) return;
+
+            ctx.save();
+            ctx.translate(-Math.floor(camera.x), -Math.floor(camera.y));
+
+            // 1. Render Map Tiles
+            let startCol = Math.floor(camera.x / TILE_SIZE);
+            let endCol = startCol + Math.ceil(canvas.width / TILE_SIZE) + 1;
+            let startRow = Math.floor(camera.y / TILE_SIZE);
+            let endRow = startRow + Math.ceil(canvas.height / TILE_SIZE) + 1;
+
+            for (let r = startRow; r < Math.min(MAP_ROWS, endRow); r++) {
+                for (let c = startCol; c < Math.min(MAP_COLS, endCol); c++) {
+                    let tile = gameMap[r][c];
+                    let px = c * TILE_SIZE;
+                    let py = r * TILE_SIZE;
+
+                    if (tile === 0) {
+                        // Rumput Tanah
+                        ctx.fillStyle = ((r + c) % 2 === 0) ? '#1e293b' : '#0f172a';
+                        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                        ctx.strokeStyle = '#334155';
+                        ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+                    } else if (tile === 1) {
+                        // Pohon / Dinding
+                        ctx.fillStyle = '#065f46';
+                        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                        ctx.fillStyle = '#047857';
+                        ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                    } else if (tile === 2) {
+                        // Air
+                        ctx.fillStyle = '#1d4ed8';
+                        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                        ctx.fillStyle = '#3b82f6';
+                        ctx.fillRect(px + 6, py + 6, TILE_SIZE - 12, TILE_SIZE - 12);
+                    } else if (tile === 4) {
+                        // Portal Keluar
+                        ctx.fillStyle = collectedGems >= 5 ? '#a855f7' : '#475569';
+                        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                        ctx.fillStyle = '#facc15';
+                        ctx.font = '14px sans-serif';
+                        ctx.fillText('🌀', px + 6, py + 22);
+                    }
+                }
+            }
+
+            // 2. Render Kristal Item
+            items.forEach(item => {
+                if (!item.collected) {
+                    let ix = item.x * TILE_SIZE + 6;
+                    let iy = item.y * TILE_SIZE + 6;
+                    ctx.fillStyle = '#22d3ee';
+                    ctx.beginPath();
+                    ctx.arc(ix + 10, iy + 10, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#0891b2';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+
+            // 3. Render Musuh (Monster Merah)
+            enemies.forEach(en => {
+                let ex = en.x * TILE_SIZE + 4;
+                let ey = en.y * TILE_SIZE + 4;
+                ctx.fillStyle = '#dc2626';
+                ctx.fillRect(ex, ey, TILE_SIZE - 8, TILE_SIZE - 8);
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(ex + 6, ey + 8, 6, 6);
+                ctx.fillRect(ex + 16, ey + 8, 6, 6);
+            });
+
+            // 4. Render Hero Sprite menggunakan data kustom sprite 64x47
+            let heroSpriteImg = getHeroCanvas();
+            ctx.drawImage(heroSpriteImg, Math.floor(hero.pixelX - 8), Math.floor(hero.pixelY - 12), TILE_SIZE * 1.5, TILE_SIZE * 1.5);
+
+            ctx.restore();
+        }
+
+        function showEndScreen(isWin) {
+            let overlay = document.getElementById('game-overlay');
+            overlay.classList.remove('hidden');
+            if (isWin) {
+                overlay.innerHTML = `
+                    <h1 class="text-xl md:text-3xl text-emerald-400 mb-2">🎉 SELAMAT! ANDA MENANG!</h1>
+                    <p class="text-xs text-slate-300 mb-4">Berhasil mengumpulkan semua kristal dan keluar dari labirin.</p>
+                    <p class="text-sm text-yellow-400 mb-6">Skor Akhir: ${score}</p>
+                    <button onclick="startGame()" class="bg-emerald-500 hover:bg-emerald-400 text-black text-sm px-6 py-3 rounded retro-btn border-2 border-black font-bold">
+                        MAIN LAGI
+                    </button>
+                `;
+            } else {
+                overlay.innerHTML = `
+                    <h1 class="text-xl md:text-3xl text-red-500 mb-2">💀 GAME OVER</h1>
+                    <p class="text-xs text-slate-300 mb-4">Anda kehabisan nyawa setelah terserang monster.</p>
+                    <button onclick="startGame()" class="bg-red-600 hover:bg-red-500 text-white text-sm px-6 py-3 rounded retro-btn border-2 border-black font-bold">
+                        COBA LAGI
+                    </button>
+                `;
+            }
+        }
+
+        // Loop Game Utama
+        let lastTime = 0;
+        let fpsTimer = 0;
+        let frameCount = 0;
+
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            let deltaTime = timestamp - lastTime;
+            frameCount++;
+            fpsTimer += deltaTime;
+
+            if (fpsTimer >= 1000) {
+                document.getElementById('fps-counter').innerText = Math.round((frameCount * 1000) / fpsTimer);
+                frameCount = 0;
+                fpsTimer = 0;
+            }
+            lastTime = timestamp;
+
+            update();
+            draw();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Jalankan saat load
+        window.onload = function() {
+            resizeCanvas();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
